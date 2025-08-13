@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Meter - Vitrice & Artenis</title>
+    <style>
+        /* Reset et styles de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #ffebee;
+            color: #d81b60;
+            overflow-x: hidden;
+        }
+        
+        /* Page de chargement */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease-out;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loader {
+            width: 80px;
+            height: 80px;
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .loading-text span {
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* Page d'authentification */
+        .auth-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .auth-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .auth-box h2 {
+            color: #d81b60;
+            margin-bottom: 20px;
+        }
+        
+        .auth-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ffcdd2;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .auth-box input:focus {
+            border-color: #d81b60;
+        }
+        
+        .auth-box button {
+            background: linear-gradient(to right, #ff758c, #ff7eb3);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .auth-box button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(216, 27, 96, 0.4);
+        }
+        
+        .error-message {
+            color: #f44336;
+            margin-top: 10px;
+            font-size: 14px;
+            height: 20px;
+        }
+        
+        /* Contenu principal */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            display: none;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 1s;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #d81b60;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            color: #880e4f;
+        }
+        
+        .couple-names {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .couple-names span {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0 15px;
+        }
+        
+        .heart-icon {
+            font-size: 2rem;
+            color: #d81b60;
+            animation: heartbeat 1.5s infinite;
+        }
+        
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.1); }
+            50% { transform: scale(1); }
+            75% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Boîtes de mesure */
+        .boxes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .box {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid #ffcdd2;
+        }
+        
+        .box:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(216, 27, 96, 0.2);
+        }
+        
+        .box.locked {
+            pointer-events: none;
+            opacity: 0.7;
+            filter: grayscale(50%);
+        }
+        
+        .box.opened {
+            background: linear-gradient(135deg, #fff, #ffebee);
+        }
+        
+        .box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #ff758c, #ff7eb3);
+        }
+        
+        .box-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #d81b60;
+        }
+        
+        .box-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #880e4f;
+        }
+        
+        .box-percentage {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #d81b60;
+            display: none;
+        }
+        
+        .box-message {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* Animation d'ouverture */
+        .hearts-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .heart, .flower {
+            position: absolute;
+            opacity: 0;
+            animation: float-up 3s forwards;
+        }
+        
+        .heart {
+            color: #d81b60;
+            font-size: 24px;
+        }
+        
+        .flower {
+            color: #4caf50;
+            font-size: 20px;
+        }
+        
+        @keyframes float-up {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Résultat */
+        .result-container {
+            text-align: center;
+            margin-top: 40px;
+            display: none;
+        }
+        
+        .result-percentage {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #d81b60;
+            margin: 20px 0;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .result-message {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #880e4f;
+        }
+        
+        .result-description {
+            font-size: 1.1rem;
+            color: #555;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+        
+        .restart-btn {
+            background: linear-gradient(to right, #ff758c, #ff7eb3);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(216, 27, 96, 0.4);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .boxes-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .couple-names span {
+                font-size: 1.4rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .boxes-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .box {
+                padding: 15px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Page de chargement -->
+    <div class="loading-screen">
+        <div class="loader"></div>
+        <div class="loading-text">
+            <span>Calcul de l'amour entre Vitrice et Artenis...</span>
+        </div>
+    </div>
+    
+    <!-- Page d'authentification -->
+    <div class="auth-container">
+        <div class="auth-box">
+            <h2><i class="fas fa-lock"></i> Authentification</h2>
+            <input type="text" id="username" placeholder="Nom d'utilisateur" required>
+            <input type="password" id="password" placeholder="Mot de passe" required>
+            <div class="error-message" id="error-message"></div>
+            <button id="login-btn">Continuer</button>
+        </div>
+    </div>
+    
+    <!-- Contenu principal -->
+    <div class="container">
+        <header>
+            <h1>Love Meter <i class="fas fa-heart heart-icon"></i></h1>
+            <p>Découvrons le pourcentage d'amour entre nous deux</p>
+            
+            <div class="couple-names">
+                <span>Vitrice</span>
+                <i class="fas fa-heart heart-icon"></i>
+                <span>Artenis</span>
+            </div>
+        </header>
+        
+        <div class="boxes-container" id="boxes-container">
+            <!-- Les boîtes seront générées par JavaScript -->
+        </div>
+        
+        <div class="result-container" id="result-container">
+            <h2>Résultat Final</h2>
+            <div class="result-percentage" id="final-percentage">0%</div>
+            <div class="result-message" id="final-message"></div>
+            <div class="result-description" id="final-description"></div>
+            <button class="restart-btn" id="restart-btn">Recommencer</button>
+        </div>
+    </div>
+    
+    <!-- Conteneur pour les cœurs et fleurs -->
+    <div class="hearts-container" id="hearts-container"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Éléments DOM
+            const loadingScreen = document.querySelector('.loading-screen');
+            const authContainer = document.querySelector('.auth-container');
+            const container = document.querySelector('.container');
+            const boxesContainer = document.getElementById('boxes-container');
+            const resultContainer = document.getElementById('result-container');
+            const finalPercentage = document.getElementById('final-percentage');
+            const finalMessage = document.getElementById('final-message');
+            const finalDescription = document.getElementById('final-description');
+            const restartBtn = document.getElementById('restart-btn');
+            const heartsContainer = document.getElementById('hearts-container');
+            const loginBtn = document.getElementById('login-btn');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Données des boîtes
+            const boxesData = [
+                { icon: 'fas fa-heart', title: 'Amour Pur', percentage: 0 },
+                { icon: 'fas fa-kiss-wink-heart', title: 'Passion', percentage: 0 },
+                { icon: 'fas fa-hands-holding-heart', title: 'Compatibilité', percentage: 0 },
+                { icon: 'fas fa-ring', title: 'Engagement', percentage: 0 },
+                { icon: 'fas fa-laugh-beam', title: 'Bonheur', percentage: 0 },
+                { icon: 'fas fa-hand-holding-heart', title: 'Soutien', percentage: 0 },
+                { icon: 'fas fa-infinity', title: 'Éternité', percentage: 0 },
+                { icon: 'fas fa-magic', title: 'Magie', percentage: 0 }
+            ];
+            
+            // Messages en fonction du pourcentage
+            const percentageMessages = [
+                { min: 0, max: 20, message: "Oh non... Il y a du travail à faire 😢", description: "Ne vous inquiétez pas, l'amour peut grandir avec le temps et les efforts !" },
+                { min: 21, max: 40, message: "Il y a un début d'amour 💕", description: "C'est un bon départ, continuez à cultiver votre relation !" },
+                { min: 41, max: 60, message: "Vous vous aimez bien ❤", description: "Votre relation est prometteuse, continuez sur cette voie !" },
+                { min: 61, max: 80, message: "Un amour solide et profond 💖", description: "Votre connexion est forte et pleine de potentiel !" },
+                { min: 81, max: 95, message: "Un amour presque parfait 💘", description: "Vous êtes faits l'un pour l'autre, c'est évident !" },
+                { min: 96, max: 100, message: "Un amour de conte de fées 💞", description: "C'est l'amour vrai et éternel, chérissez-le !" }
+            ];
+            
+            // Variables d'état
+            let selectedBoxIndex = null;
+            let openedBoxes = 0;
+            
+            // Simuler le chargement
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                authContainer.style.display = 'flex';
+            }, 3000);
+            
+            // Gestion de l'authentification
+            loginBtn.addEventListener('click', () => {
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value.trim();
+                
+                if (username === 'vitrice' && password === 'artenis') {
+                    errorMessage.textContent = '';
+                    authContainer.style.display = 'none';
+                    container.style.display = 'block';
+                    initializeBoxes();
+                } else {
+                    errorMessage.textContent = 'Nom d\'utilisateur ou mot de passe incorrect';
+                    usernameInput.value = '';
+                    passwordInput.value = '';
+                }
+            });
+            
+            // Initialiser les boîtes
+            function initializeBoxes() {
+                boxesContainer.innerHTML = '';
+                
+                // Générer des pourcentages aléatoires pour chaque boîte
+                boxesData.forEach(box => {
+                    box.percentage = Math.floor(Math.random() * 41) + 60; // Entre 60% et 100%
+                });
+                
+                // Créer les éléments des boîtes
+                boxesData.forEach((box, index) => {
+                    const boxElement = document.createElement('div');
+                    boxElement.className = 'box';
+                    boxElement.dataset.index = index;
+                    
+                    boxElement.innerHTML = `
+                        <div class="box-icon"><i class="${box.icon}"></i></div>
+                        <div class="box-title">${box.title}</div>
+                        <div class="box-percentage">${box.percentage}%</div>
+                        <div class="box-message"></div>
+                    `;
+                    
+                    boxElement.addEventListener('click', () => openBox(index));
+                    boxesContainer.appendChild(boxElement);
+                });
+            }
+            
+            // Ouvrir une boîte
+            function openBox(index) {
+                if (selectedBoxIndex !== null || openedBoxes >= 1) return;
+                
+                selectedBoxIndex = index;
+                openedBoxes++;
+                const box = boxesData[index];
+                const boxElement = document.querySelector(`.box[data-index="${index}"]`);
+                
+                // Afficher le pourcentage et le message
+                const percentageElement = boxElement.querySelector('.box-percentage');
+                const messageElement = boxElement.querySelector('.box-message');
+                
+                // Ajouter la classe opened
+                boxElement.classList.add('opened');
+                
+                // Désactiver toutes les autres boîtes
+                document.querySelectorAll('.box').forEach((box, i) => {
+                    if (i !== index) {
+                        box.classList.add('locked');
+                    }
+                });
+                
+                // Animer le pourcentage
+                animatePercentage(0, box.percentage, percentageElement, () => {
+                    // Afficher le message approprié
+                    const messageData = percentageMessages.find(m => 
+                        box.percentage >= m.min && box.percentage <= m.max
+                    );
+                    
+                    messageElement.textContent = messageData.message;
+                    messageElement.style.display = 'block';
+                    
+                    // Lancer l'animation des cœurs et fleurs
+                    createHeartsAndFlowers(50);
+                    
+                    // Afficher le résultat final après un délai
+                    setTimeout(() => {
+                        showFinalResult(box.percentage);
+                    }, 3000);
+                });
+            }
+            
+            // Animer le pourcentage
+            function animatePercentage(start, end, element, callback) {
+                let current = start;
+                const increment = end > start ? 1 : -1;
+                const delay = 20;
+                
+                element.style.display = 'block';
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    element.textContent = current + '%';
+                    
+                    if (current === end) {
+                        clearInterval(timer);
+                        if (callback) callback();
+                    }
+                }, delay);
+            }
+            
+            // Créer des cœurs et fleurs animés
+            function createHeartsAndFlowers(count) {
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        const isHeart = Math.random() > 0.3;
+                        const heartOrFlower = document.createElement('div');
+                        heartOrFlower.className = isHeart ? 'heart' : 'flower';
+                        heartOrFlower.innerHTML = isHeart ? '<i class="fas fa-heart"></i>' : '<i class="fas fa-spa"></i>';
+                        
+                        // Position aléatoire
+                        const startX = Math.random() * window.innerWidth;
+                        heartOrFlower.style.left = startX + 'px';
+                        heartOrFlower.style.bottom = '-20px';
+                        
+                        // Animation aléatoire
+                        const duration = 2 + Math.random() * 3;
+                        heartOrFlower.style.animationDuration = duration + 's';
+                        
+                        heartsContainer.appendChild(heartOrFlower);
+                        
+                        // Supprimer après l'animation
+                        setTimeout(() => {
+                            heartOrFlower.remove();
+                        }, duration * 1000);
+                    }, i * 100);
+                }
+            }
+            
+            // Afficher le résultat final
+            function showFinalResult(percentage) {
+                const messageData = percentageMessages.find(m => 
+                    percentage >= m.min && percentage <= m.max
+                );
+                
+                finalPercentage.textContent = percentage + '%';
+                finalMessage.textContent = messageData.message;
+                finalDescription.textContent = messageData.description;
+                resultContainer.style.display = 'block';
+                
+                // Faire défiler vers le résultat
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+                
+                // Lancer plus d'animations
+                createHeartsAndFlowers(30);
+            }
+            
+            // Bouton recommencer
+            restartBtn.addEventListener('click', () => {
+                selectedBoxIndex = null;
+                openedBoxes = 0;
+                resultContainer.style.display = 'none';
+                
+                // Réinitialiser les boîtes
+                document.querySelectorAll('.box').forEach(box => {
+                    box.classList.remove('opened', 'locked');
+                    box.querySelector('.box-percentage').style.display = 'none';
+                    box.querySelector('.box-message').style.display = 'none';
+                });
+                
+                // Réinitialiser les données
+                initializeBoxes();
+                
+                // Faire défiler vers le haut
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+            // Permettre aussi la connexion avec la touche Entrée
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    loginBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
